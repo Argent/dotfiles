@@ -1,5 +1,15 @@
 ## What's included, and how to customize?
 
+# General
+
+## Find duplicate files
+
+Use the `file_comparer.py` script. Usage:
+
+```bash
+$ ./file_comparer.py "/volume1/Serien/"
+```
+
 # Synology Diskstation
 
 ## Access SFTP with root login
