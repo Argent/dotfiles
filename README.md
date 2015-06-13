@@ -8,6 +8,16 @@
   2. ipkg install openssh-sftp-server
   3. copy sshd_config to /etc/ssh/sshd_config
 
+## Install Oh-My-Zsh
+
+as root:
+
+```bash
+$ cd ~
+$ curl -L https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh | sh
+```
+
+Replace the theme in .zshrc with `ys`
 
 ## Common problems after updating
 
@@ -17,9 +27,11 @@
 
 Download them and put them back on the diskstation
 
-  .profile -> /root  
-  profile  -> /etc/profile
-  
+```
+.profile -> /root  
+profile  -> /etc/profile
+```
+
 The import parts are to put `/opt/bin` and `/opt/sbin` back into the path. This is where most custom programs and **ipkg** stuff goes. You can use `vi` to manipulate the the files or if you previously installed nano you can call it with it's full path `/opt/bin/nano`.
 
 ### Filebot
