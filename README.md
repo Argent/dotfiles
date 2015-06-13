@@ -1,5 +1,7 @@
 ## What's included, and how to customize?
 
+# Synology Diskstation
+
 ## Access SFTP with root login
 
   1. ipkg update
@@ -8,6 +10,17 @@
 
 
 ## Common problems after updating
+
+### Paths
+
+##### Most Diskstation updates will probably delete the root home directory and reset the root `~/.profile` as well as `/etc/profile`
+
+Download them and put them back on the diskstation
+
+  .profile -> /root  
+  profile  -> /etc/profile
+  
+The import parts are to put `/opt/bin` and `/opt/sbin` back into the path. This is where most custom programs and **ipkg** stuff goes. You can use `vi` to manipulate the the files or if you previously installed nano you can call it with it's full path `/opt/bin/nano`.
 
 ### Filebot
 
