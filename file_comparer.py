@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import sys, os, re
+import sys, os, re, timeit, datetime
 
 valid_extensions = [".avi", ".mkv", ".mp4"]
 qualities = ["bluray", "web-dl", "web.dl", "webrip", "hdtv"]
@@ -85,6 +85,9 @@ def main(argv):
   if len(argv) > 1:
     if argv[1].lower() == "delete":
       shouldDelete = True
+
+  start = timeit.default_timer()
+
   files = walkDir(argv[0])
   files = [[file, False] for file in files]
   duplicates = []
@@ -127,10 +130,13 @@ def main(argv):
   for duplicate in duplicates:
     fileSizeSum += os.stat(duplicate).st_size
 
+  stop = timeit.default_timer()
+
   if len(duplicates) > 0:
     print ""
 
   print "Found " + str(len(duplicates)) + " duplicated entries"
+  print "Time needed: " + str(datetime.timedelta(seconds=(stop - start)))
   print "Total file size: " + sizeof_fmt(fileSizeSum)
 
   if not shouldDelete and len(duplicates) > 0:
