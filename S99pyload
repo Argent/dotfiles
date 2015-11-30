@@ -1,0 +1,242 @@
+#!/bin/sh
+ 
+##########################################################################
+# pyLoad STARTUP and UPDATE SCRIPT for Synology NAS
+# AUTOSTART pyLoad as DAEMON - UPDATE PROGRAM FILES
+# <./S99pyload info>  for  more  details  and  help
+##########################################################################
+ 
+PATH=/opt/bin:/opt/sbin:/sbin:/bin:/usr/sbin:/usr/bin
+SYNO=/usr/syno/bin
+DAEMON="python /opt/share/pyload/pyLoadCore.py --daemon"
+DAEMON_OPTS="--debug"
+QUIT="python /opt/share/pyload/pyLoadCore.py --quit"
+STATUS="python /opt/share/pyload/pyLoadCore.py --status"
+VERSION="python /opt/share/pyload/pyLoadCore.py --version"
+RELEASE_SRC="https://bitbucket.org/spoob/pyload/get/v0.4.8.zip" #edit v0.4.8.zip if a new release is out there!
+UPDATE_SRC="https://bitbucket.org/spoob/pyload/get/tip.zip"
+LOG="/volume1/pyload/Logs/log.txt" #your path to the Logfile here!
+SCRN=/opt/etc/init.d/S99pyload
+ 
+##########################################################################
+# COMMANDS START
+##########################################################################
+ 
+start()
+{
+          echo "`$VERSION`: try to start"
+          echo "`$VERSION`:" `$DAEMON`
+          sleep 2
+               if [ `$STATUS` -gt 3 ]; then
+                   echo "`$VERSION`: successfully started"
+               else
+                  `$DAEMON`
+               fi
+}
+ 
+##########################################################################
+ 
+stop()
+{
+          echo "`$VERSION`: try to kill myself"
+          echo "`$QUIT`"
+}
+ 
+##########################################################################
+ 
+setup()
+{
+   echo "pyLoad: installing latest stable release - only run once!"
+   cd /opt/; $SYNO/wget --no-check-certificate -q $RELEASE_SRC
+              if [ $? -eq 0 ] ; then
+                 echo "pyLoad: successfully loaded latest stable release"
+              else
+                 setup
+              fi
+              unzip -q spoob-pyload*.zip; rm spoob-pyload*.zip
+              if [ $? -eq 0 ] ; then
+                 echo "pyLoad: archive unzipped and removed"; sleep 2
+              else
+                 setup
+              fi
+                 mv spoob-pyload* pyload
+              if [ $? -eq 0 ] ; then
+                 cd /opt/pyload/
+                 python pyLoadCore.py -s
+              else
+                 setup
+              fi
+}
+ 
+##########################################################################
+ 
+update()
+{
+#   if [ `$STATUS` -gt 3 ]; then
+        stop; sleep 5;
+#   fi
+        echo "UPDATE: updating `$VERSION`"
+        echo "`date '+%d.%m.%Y %T'` INFO      Updating `$VERSION`" >>$LOG
+        cd /opt/
+        $SYNO/wget --no-check-certificate -q $UPDATE_SRC
+              if [ $? -eq 0 ] ; then
+                 echo "UPDATE: successfully loaded dev version"
+              else
+                 update
+              fi
+              unzip -q tip*.zip; rm tip*.zip
+              if [ $? -eq 0 ] ; then
+                 echo "UPDATE: archive unzipped and removed"; sleep 2
+              else
+                 update
+              fi
+                 $SYNO/rsync -qr /opt/spoob-pyload-*/ /opt/share/pyload/
+              if [ $? -eq 0 ] ; then
+                 echo "UPDATE: `$VERSION` successfully updated"
+              else
+                 update
+              fi
+                 rm -rf /opt/spoob-pyload-*/
+                 echo "`date '+%d.%m.%Y %T'` INFO      Update complete" >>$LOG
+              start
+}
+ 
+##########################################################################
+ 
+stable()
+{
+   if [ `$STATUS` -gt 3 ]; then
+        stop; sleep 5;
+   fi
+        echo "`$VERSION`: installing latest stable release"
+        mkdir pyload_tip; cd /opt/share/pyload/; cp -r * /opt/share/pyload_tip/
+        cd /opt/
+        $SYNO/wget --no-check-certificate -q $RELEASE_SRC
+              if [ $? -eq 0 ] ; then
+                 echo "`$VERSION`: successfully loaded latest stable release"
+              else
+                 stable
+              fi
+              unzip -q spoob-pyload*.zip; rm spoob-pyload*.zip
+              if [ $? -eq 0 ] ; then
+                 echo "`$VERSION`: archive unzipped and removed"; sleep 2
+              else
+                 stable
+              fi
+                 $SYNO/rsync -qr /opt/spoob-pyload-*/ /opt/share/pyload/
+              if [ $? -eq 0 ] ; then
+                 echo "`$VERSION`: successfully installed"
+              else
+                 stable
+              fi
+                 rm -rf /opt/spoob-pyload-*/
+              start
+}
+ 
+##########################################################################
+ 
+debug()
+{
+    if [ `$STATUS` -gt 3 ]; then
+        echo "`$VERSION`: already performing ... restart"
+        stop
+        sleep 5
+        debug
+    else
+        echo "`$VERSION`: try to start in debug mode + show output"
+        echo "`$VERSION`:" `$DAEMON $DAEMON_OPTS`
+        sleep 2
+        if [ `$STATUS` -gt 3 ]; then
+               echo "`$VERSION`: successfully startet in debug mode"
+               echo ""
+               echo "***** ctrl + c to STOP OUTPUT and return *****"
+               echo ""
+               tail -f $LOG
+        else
+               `$DAEMON $DAEMON_OPTS`
+        fi
+    fi
+}
+ 
+##########################################################################
+ 
+info()
+{
+     if [ `$STATUS` -gt 3 ];
+     then
+          echo "`$VERSION`: Process ID is `$STATUS`"
+          echo ""
+echo -e '\e[33m####################################################################\e[0m'
+echo -e '\e[33m# OPERATIONS\e[0m'
+echo -e '\e[33m# start   = start pyLoad (default)\e[0m'
+echo -e '\e[33m# stop    = stop pyLoad\e[0m'
+echo -e '\e[33m# restart = stop and start pyLoad\e[0m'
+echo -e '\e[33m# setup   = install pyLoad **only run at the first time**\e[0m'
+echo -e '\e[33m# stable  = run the latest stable version\e[0m'
+echo -e '\e[33m# update  = update program files\e[0m'
+echo -e '\e[33m# debug   = enable debug mode + output\e[0m'
+echo -e '\e[33m# info    = print out PID and status of pyLoad\e[0m'
+echo -e '\e[33m# show    = print out Logfile while executing\e[0m'
+echo -e '\e[33m####################################################################\e[0m'
+ 
+     else
+           echo "`$VERSION`: process is NOT active"
+     fi
+}
+ 
+##########################################################################
+ 
+show()
+{
+     start
+     while [ `$STATUS` -gt 3 ]; do
+        echo ""
+        echo "***** ctrl + c to STOP OUTPUT and return *****"
+        echo ""
+        tail -f $LOG
+     done
+}
+ 
+##########################################################################
+ 
+case "$1" in
+      start)
+              start
+              ;;
+      stop)
+              stop
+              ;;
+      restart)
+              stop
+              sleep 5
+              start
+              ;;
+      setup)
+              setup
+              ;;
+      stable)
+              stable
+              ;;
+      update)
+              update
+              ;;
+      debug)
+              debug
+              ;;
+      info)
+              info
+              ;;
+      show)
+              show
+              ;;
+      *)
+echo "Usage: $SCRN (start|stop|restart|setup|stable|update|debug|info|show)" >&2
+              exit 1
+              ;;
+esac
+ 
+ 
+exit 0
+##########################################################################
+# End of script
+##########################################################################

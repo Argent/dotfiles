@@ -1,0 +1,40 @@
+#!/bin/sh
+
+##########################################################################
+# init script
+##########################################################################
+
+start()
+{
+	echo "copying root files from backup directory (/volume1/Backup/root_bak/)"
+	`cp -fR /volume1/Backup/root_bak /root/`
+
+	echo "downloading nzbToFilebot script from Github"
+	`wget -q -N --no-check-certificate https://raw.githubusercontent.com/Argent/dotfiles/master/nzbGet/nzbToFilebot.sh /volume1/@appstore/nzbget/share/nzbget/scripts/nzbToMedia/nzbToFilebot.sh`
+	`chmod +x /volume1/@appstore/nzbget/share/nzbget/scripts/nzbToMedia/nzbToFilebot.sh`
+
+  echo "downloading filebot libraries"
+  `wget -q -N http://sourceforge.net/p/filebot/code/HEAD/tree/trunk/lib/native/linux-i686/lib7-Zip-JBinding.so?format=raw /volume1/@appstore/filebot/lib7-Zip-JBinding.so`
+  `wget -q -N http://sourceforge.net/p/filebot/code/HEAD/tree/trunk/lib/native/linux-i686/libmediainfo.so?format=raw /volume1/@appstore/filebot/libmediainfo.so`
+  `wget -q -N http://sourceforge.net/p/filebot/code/HEAD/tree/trunk/lib/native/linux-i686/libzen.so?format=raw /volume1/@appstore/filebot/libzen.so`
+  `wget -q -N http://sourceforge.net/p/filebot/code/HEAD/tree/trunk/lib/native/linux-i686/fpcalc?format=raw /volume1/@appstore/filebot/fpcalc`
+
+  echo "starting jDownloader"
+  (cd /volume1/@appstore/jDownloader2 && exec java -Djava.awt.headless=true -jar JDownloader.jar)
+}
+
+case "$1" in
+      start)
+              start
+              ;;
+      *)
+echo "Usage: $SCRN start" >&2
+              exit 1
+              ;;
+esac
+ 
+ 
+exit 0
+##########################################################################
+# End of script
+##########################################################################
