@@ -1,0 +1,43 @@
+#!/bin/sh 
+# 
+# Startup script for jdownloader2 
+# 
+# Stop myself if running 
+# 
+
+DESC="jDownloader2 Server"
+NAME="S99jdownloader"
+DIR="/volume1/@appstore/jDownloader2"
+SCRIPT="/opt/etc/init.d/$NAME"
+PIDFILE="$DIR/JDownloader.pid"
+JAVA="/usr/local/bin/java"
+PARM="-Djava.awt.headless=true -jar $DIR/JDownloader.jar"
+
+start() { 
+    nohup su -c "$JAVA $PARM < /dev/null &" jdownloader >& /dev/null &
+} 
+# 
+stop() { 
+    [ -f ${PIDFILE} ] && kill `cat ${PIDFILE}`  
+} 
+# 
+case "$1" in 
+    start) 
+        start 
+        ;; 
+    stop) 
+        stop 
+        ;; 
+    restart) 
+        stop 
+        sleep 20
+        start 
+        ;; 
+    *) 
+        echo "Usage: $0 (start|stop|restart)" 
+        exit 1 
+        ;; 
+esac
+
+exit 0 
+# End
