@@ -2,6 +2,42 @@
 
 import sys, os, re, timeit, datetime
 
+class Node:
+  def __init__(self, name, parent):
+    self.name = name
+    self.parent = parent
+    self.visited = False
+    self.children = []
+
+  def addChild(self, child):
+    self.children.append(child)
+
+  def addChildren(self, children):
+    for child in children:
+      self.addChild(child)
+
+  def fullname(self):
+    if self.parent is not None:
+      return self.parent.fullname() + os.path.sep + self.name
+    else:
+      return self.name
+
+  def getParent(self, level):
+    localParent = self.parent
+    for i in range(level):
+      if localParent is None:
+        break
+      localParent = localParent.parent
+    return localParent
+
+  def walk(self):
+    list = []
+    if len(self.children) is 0:
+      list.append(self)
+    for child in self.children:
+      list.extend(child.walk())
+    return list
+
 valid_extensions = [".avi", ".mkv", ".mp4"]
 qualities = ["bluray", "web-dl", "web.dl", "webrip", "hdtv"]
 
@@ -69,12 +105,31 @@ def query_yes_no(question, default="yes"):
                              "(or 'y' or 'n').\n")
 
 def walkDir(path):
-  retVal = []
-  for (dir, _, files) in os.walk(path):
-    for f in files:
-      path = os.path.join(dir, f)
-      retVal.append(path)
-  return retVal
+  components = os.path.abspath(path).split(os.path.sep)
+  if len(components) is 0:
+    return []
+  parent = None
+  for dir in components[:-1]:
+    child = Node(dir, parent)
+    if parent is not None:
+      parent.addChild(child)
+    parent = child
+  return _getFiles(path, parent)
+
+def _getFiles(path, parent):
+  node = Node(os.path.basename(os.path.abspath(path)), parent)
+  list = []
+  for file in os.listdir(path):
+    fullPath = os.path.join(path, file)
+    if os.path.isdir(fullPath):
+      children = _getFiles(fullPath, node)
+      parent.addChildren(children)
+      list.extend(children)
+    else:
+      child = Node(file, node)
+      parent.addChild(child)
+      list.append(child)
+  return list
 
 def main(argv):
   global shouldDelete
@@ -87,36 +142,40 @@ def main(argv):
       shouldDelete = True
 
   start = timeit.default_timer()
-
   files = walkDir(argv[0])
-  files = [[file, False] for file in files]
+  walkTime = timeit.default_timer()
+
   duplicates = []
-  #find = re.compile(r"^([^.]*).*")
-  for index, (file, visited) in enumerate(files):
-    #print re.search(find, file).group(0)
-    if visited:
+  # find = re.compile(r"^([^.]*).*")
+  for file in files:
+    filename = file.name
+
+    # print re.search(find, filename).group(0)
+    if file.visited:
       continue
 
-    files[index][1] = True
+    file.visited = True
 
-    fileFirstPart = file[0:file.find('.')]
-    fileExtension = os.path.splitext(file)[1]
+    fileFirstPart = filename[0:filename.find('.')]
+    fileExtension = os.path.splitext(filename)[1]
 
     localDuplicates = []
 
     found = False
-    for index, (otherFile, visited) in enumerate(files):
-      if visited:
+    for otherFile in file.getParent(1).walk():
+      otherFileName = otherFile.name
+
+      if otherFile.visited:
         continue
 
-      otherFileExtension = os.path.splitext(otherFile)[1]
-      if otherFile.startswith(fileFirstPart) and fileExtension.lower() in valid_extensions and otherFileExtension.lower() in valid_extensions:
-        files[index][1] = True
+      otherFileExtension = os.path.splitext(otherFileName)[1]
+      if otherFileName.startswith(fileFirstPart) and fileExtension.lower() in valid_extensions and otherFileExtension.lower() in valid_extensions:
+        otherFile.visited = True
         found = True
-        localDuplicates.append(otherFile)
+        localDuplicates.append(otherFile.fullname())
 
     if found:
-      localDuplicates.append(file)
+      localDuplicates.append(file.fullname())
       localDuplicates.sort(cmp_items)
       for toDelete in localDuplicates[1:]:
         duplicates.append(toDelete)
@@ -136,7 +195,10 @@ def main(argv):
     print ""
 
   print "Found " + str(len(duplicates)) + " duplicated entries"
-  print "Time needed: " + str(datetime.timedelta(seconds=(stop - start)))
+  print "Time needed:"
+  print "  Total:\t" + str(datetime.timedelta(seconds=(stop - start)))
+  print "  I/O:\t\t" + str(datetime.timedelta(seconds=(walkTime - start)))
+  print "  CPU:\t\t" + str(datetime.timedelta(seconds=(stop - walkTime)))
   print "Total file size: " + sizeof_fmt(fileSizeSum)
 
   if not shouldDelete and len(duplicates) > 0:
@@ -151,6 +213,3 @@ if __name__ == "__main__":
   #print 'Number of arguments:', len(sys.argv), 'arguments.'
   #print 'Argument List:', str(sys.argv)
   main(sys.argv[1:])
-
-
-
