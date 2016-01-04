@@ -8,13 +8,8 @@ class Node:
     self.parent = parent
     self.visited = False
     self.children = []
-
-  def addChild(self, child):
-    self.children.append(child)
-
-  def addChildren(self, children):
-    for child in children:
-      self.addChild(child)
+    if parent is not None:
+      parent.children.append(self)
 
   def fullname(self):
     if self.parent is not None:
@@ -31,9 +26,9 @@ class Node:
     return localParent
 
   def walk(self):
-    list = []
     if len(self.children) is 0:
-      list.append(self)
+      return [self]
+    list = []
     for child in self.children:
       list.extend(child.walk())
     return list
@@ -42,6 +37,7 @@ valid_extensions = [".avi", ".mkv", ".mp4"]
 qualities = ["bluray", "web-dl", "web.dl", "webrip", "hdtv"]
 
 shouldDelete = False
+recursionLevel = 0
 
 def cmp_items(a, b):
   reversedQualities = list(reversed(qualities))
@@ -111,10 +107,13 @@ def walkDir(path):
   parent = None
   for dir in components[:-1]:
     child = Node(dir, parent)
-    if parent is not None:
-      parent.addChild(child)
     parent = child
   return _getFiles(path, parent)
+
+def recPrint(node, tab = ""):
+  print tab + node.name
+  for child in node.children:
+    recPrint(child, tab + "  ")
 
 def _getFiles(path, parent):
   node = Node(os.path.basename(os.path.abspath(path)), parent)
@@ -123,11 +122,9 @@ def _getFiles(path, parent):
     fullPath = os.path.join(path, file)
     if os.path.isdir(fullPath):
       children = _getFiles(fullPath, node)
-      parent.addChildren(children)
       list.extend(children)
     else:
       child = Node(file, node)
-      parent.addChild(child)
       list.append(child)
   return list
 
@@ -143,6 +140,7 @@ def main(argv):
 
   start = timeit.default_timer()
   files = walkDir(argv[0])
+  # recPrint(files[0].parent)
   walkTime = timeit.default_timer()
 
   duplicates = []
@@ -162,7 +160,7 @@ def main(argv):
     localDuplicates = []
 
     found = False
-    for otherFile in file.getParent(1).walk():
+    for otherFile in file.getParent(recursionLevel).walk():
       otherFileName = otherFile.name
 
       if otherFile.visited:
