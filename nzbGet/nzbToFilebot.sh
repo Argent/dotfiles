@@ -27,6 +27,7 @@ fi
 CATEGORY=$(echo "$NZBPP_CATEGORY" | awk '{print tolower($0)}')
 
 _split() {
+  STATUS=$?
   echo "[INFO] $1"
   METHOD=$(echo "$1" | awk -F'[][]' '{print $2}')
   REST==$(echo "$1"| sed -e "s/\[$METHOD\]//g")
@@ -49,4 +50,9 @@ else
   exit $POSTPROCESS_SKIPPED
 fi
 
-exit $POSTPROCESS_SUCCESS
+if [ $STATUS -eq 0 ];then
+  exit $POSTPROCESS_SUCCESS
+else
+  echo "[WARNING] Filebot script failed"
+  exit $POSTPROCESS_SKIPPED
+fi
