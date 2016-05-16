@@ -16,14 +16,17 @@ start()
   `chmod +x /volume1/@appstore/nzbget/share/nzbget/scripts/nzbToMedia/nzbToFilebot.sh`
 
   echo "downloading filebot libraries"
-  `wget -q http://sourceforge.net/p/filebot/code/HEAD/tree/trunk/lib/native/linux-i686/lib7-Zip-JBinding.so?format=raw \
-    -O /volume1/@appstore/filebot/lib7-Zip-JBinding.so`
-  `wget -q http://sourceforge.net/p/filebot/code/HEAD/tree/trunk/lib/native/linux-i686/libmediainfo.so?format=raw \
-    -O /volume1/@appstore/filebot/libmediainfo.so`
-  `wget -q http://sourceforge.net/p/filebot/code/HEAD/tree/trunk/lib/native/linux-i686/libzen.so?format=raw \
-    -O /volume1/@appstore/filebot/libzen.so`
-  `wget -q http://sourceforge.net/p/filebot/code/HEAD/tree/trunk/lib/native/linux-i686/fpcalc?format=raw \
-    -O /volume1/@appstore/filebot/fpcalc`
+  `wget -q --no-check-certificate https://github.com/filebot/filebot/raw/master/lib/native/linux-i686/libmediainfo.so -O /volume1/@appstore/filebot/libmediainfo.so`
+  `wget -q --no-check-certificate https://github.com/filebot/filebot/raw/master/lib/native/linux-i686/lib7-Zip-JBinding.so -O /volume1/@appstore/filebot/lib7-Zip-JBinding.so`
+  `wget -q --no-check-certificate https://github.com/filebot/filebot/raw/master/lib/native/linux-i686/libzen.so -O /volume1/@appstore/filebot/libzen.so`
+  `wget -q --no-check-certificate https://github.com/filebot/filebot/raw/master/lib/native/linux-i686/fpcalc -O /volume1/@appstore/filebot/fpcalc`
+  `chmod +x /volume1/@appstore/filebot/fpcalc`
+  `mkdir -p /usr/local/chromaprint/bin`
+  `rm /usr/local/chromaprint/bin/fpcalc`
+  `ln -s /volume1/@appstore/filebot/fpcalc /usr/local/chromaprint/bin/fpcalc`
+
+  echo "starting jDownloader"
+  (cd /volume1/@appstore/jDownloader2 && exec java -Djava.awt.headless=true -jar JDownloader.jar &)
 }
 
 case "$1" in
